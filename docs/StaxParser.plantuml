@@ -1,0 +1,67 @@
+@startuml
+skinparam backgroundColor white
+skinparam sequenceArrowThickness 2
+skinparam sequenceGroupBodyBackgroundColor WhiteSmoke
+
+participant "XML File\n(5-7GB)" as File
+participant "StAXParser" as Parser
+participant "XMLStreamReader" as Reader
+participant "ProductHandler" as Handler
+participant "MapPool" as Pool
+collections "Batch Processor\n(Consumer)" as Batch
+
+Parser -> File : Open file with BufferedInputStream
+activate Parser
+Parser -> Reader : createXMLStreamReader()
+activate Reader
+
+note right of Reader
+  Only reads current position
+  Never loads entire document
+end note
+
+loop while reader.hasNext()
+  Reader -> File : Pull next event
+
+  alt START_ELEMENT "product"
+    Handler -> Pool : borrowMap()
+    activate Pool
+    note right of Pool
+      Reuse existing Map objects
+      instead of creating new ones
+    end note
+    Pool --> Handler : Map object (new or recycled)
+    deactivate Pool
+
+  else CHARACTERS
+    Handler -> Handler : Accumulate text in StringBuilder
+    note right of Handler
+      Efficient text accumulation
+      with minimal object creation
+    end note
+
+  else END_ELEMENT "product"
+    Handler -> Batch : Add product to current batch
+
+    alt Batch size reaches MAX_BATCH_SIZE (5000)
+      Handler -> Batch : Process current batch
+      note right
+        Only keep MAX_BATCH_SIZE products
+        in memory at any time
+      end note
+      Handler -> Pool : Return Maps to pool
+      activate Pool
+      note right of Pool
+        Maps are cleared and recycled
+        instead of being garbage collected
+      end note
+      Pool --> Handler
+      deactivate Pool
+    end
+  end
+end
+
+deactivate Reader
+deactivate Parser
+
+@enduml

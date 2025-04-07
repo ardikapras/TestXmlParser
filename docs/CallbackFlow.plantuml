@@ -1,0 +1,65 @@
+@startuml
+skinparam backgroundColor white
+skinparam sequenceArrowThickness 2
+skinparam sequenceGroupBodyBackgroundColor WhiteSmoke
+
+participant "Client Code" as Client
+participant "StAXParser" as Parser
+participant "ProductHandler" as Handler
+participant "MapPool" as Pool
+participant "Consumer<List<Map>>" as Consumer #LightGreen
+
+Client -> Parser : parseWithCallback(file, **consumer**)
+activate Parser
+
+note right of Client
+  Instead of returning a massive list,
+  we provide a callback consumer
+  that processes data in batches
+end note
+
+Parser -> Handler : createProductHandler(batch, **processor**)
+activate Handler
+
+loop for each product in XML
+  Handler -> Pool : borrowMap()
+  activate Pool
+  Pool --> Handler : Map object
+  deactivate Pool
+
+  Handler -> Handler : Fill map with product data
+
+  Handler -> Consumer : callback.onProduct(product)
+  activate Consumer
+  Consumer --> Handler
+  deactivate Consumer
+
+  Handler -> Pool : returnMap(product)
+  activate Pool
+  Pool --> Handler
+  deactivate Pool
+
+  alt batch size reaches MAX_BATCH_SIZE
+    Handler -> Consumer : processor.accept(batch)
+    activate Consumer
+    note right
+      Batch is processed and then cleared,
+      keeping memory usage constant
+      regardless of total document size
+    end note
+    Consumer --> Handler
+    deactivate Consumer
+    Handler -> Handler : batch.clear()
+  end
+end
+
+Handler -> Consumer : Process final batch (if any)
+activate Consumer
+Consumer --> Handler
+deactivate Consumer
+
+Parser --> Client : return
+deactivate Handler
+deactivate Parser
+
+@enduml

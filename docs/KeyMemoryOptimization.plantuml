@@ -1,0 +1,70 @@
+@startuml
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam arrowColor #666666
+skinparam componentBackgroundColor #f0f0f0
+skinparam componentBorderColor #999999
+skinparam nodeBorderColor #999999
+skinparam nodeFontSize 13
+
+node "Memory Optimization Techniques" {
+  [5-7GB XML File] as file
+
+  package "Streaming Processing" {
+    [BufferedInputStream\nBUFFER_SIZE = 8192] as buffer
+    [XMLStreamReader] as reader
+    [Process one element\nat a time] as stream
+  }
+
+  package "Object Pooling" {
+    [MapPool] as pool
+    [Pre-allocated Maps\n(1000 initial objects)] as prealloc
+    [Return & Reuse Maps] as reuse
+  }
+
+  package "Batch Processing" {
+    [Process MAX_BATCH_SIZE\n(5000) products] as batch
+    [Clear batch after\nprocessing] as clear
+  }
+
+  package "Efficient Data Structures" {
+    [StringBuilder for\ntext accumulation] as sb
+    [Array-based stack\nfor path tracking] as stack
+  }
+
+  file --> buffer
+  buffer --> reader
+  reader --> stream
+
+  stream --> pool
+  pool --> prealloc
+  pool --> reuse
+
+  stream --> batch
+  batch --> clear
+
+  stream --> sb
+  stream --> stack
+}
+
+note bottom of stream
+  Never loads entire document into memory
+  Processes one XML event at a time
+end note
+
+note bottom of reuse
+  Drastically reduces garbage collection
+  by recycling Map objects
+end note
+
+note bottom of batch
+  Controls memory usage by processing
+  in fixed-size batches
+end note
+
+note bottom of stack
+  Uses array-based representation
+  for better performance and less memory
+end note
+
+@enduml

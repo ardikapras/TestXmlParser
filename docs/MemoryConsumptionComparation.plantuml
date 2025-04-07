@@ -1,0 +1,43 @@
+@startuml
+skinparam backgroundColor white
+
+scale 1.0
+
+skinparam rectangleBorderColor #333333
+skinparam rectangleBackgroundColor #F8F8F8
+
+rectangle "Memory Usage Comparison (MB)" {
+  scale 1.0
+
+  rectangle "1K Products" {
+    rectangle "JAXB: 50 MB" #E6F2FF
+    rectangle "StAX: ~0 MB" #E6FFE6
+  }
+
+  rectangle "10K Products" {
+    rectangle "JAXB: 245 MB" #CCDFFF
+    rectangle "StAX: ~0 MB" #CCFFCC
+  }
+
+  rectangle "100K Products" {
+    rectangle "JAXB: 1,688 MB" #99C2FF
+    rectangle "StAX: ~0 MB" #99FF99
+  }
+
+  rectangle "1M Products (Estimated)" {
+    rectangle "JAXB: ~17,000 MB" #4D94FF
+    rectangle "StAX: <500 MB" #4DFF4D
+  }
+
+  rectangle "5M+ Products (Estimated)" {
+    rectangle "JAXB: >20,000 MB" #0066FF
+    rectangle "StAX: <1,000 MB" #00CC00
+  }
+}
+
+note bottom
+  StAX memory usage remains nearly constant due to object pooling
+  and batch processing, while JAXB usage grows linearly with input size
+end note
+
+@enduml

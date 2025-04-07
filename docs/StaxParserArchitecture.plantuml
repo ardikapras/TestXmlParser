@@ -1,0 +1,42 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam backgroundColor white
+skinparam roundCorner 15
+
+package "Memory-Efficient XML Processing" {
+  [XML File] as xmlFile
+  [BufferedInputStream] as bis
+  [XMLStreamReader] as xmlReader
+  [StAXParser] as parser
+  [ProductHandler] as handler
+  [MapPool] as pool
+  [Consumer<List<Map>>] as consumer
+
+  xmlFile --> bis : reads from
+  bis --> xmlReader : creates
+  xmlReader --> parser : provides events
+  parser --> handler : delegates processing
+  handler --> pool : borrows/returns Maps
+  handler --> consumer : delivers batches of products
+
+  note right of xmlReader
+    Stream-based: reads one
+    element at a time
+  end note
+
+  note right of handler
+    Processes XML events without
+    keeping entire document in memory
+  end note
+
+  note bottom of pool
+    Recycles Map objects to avoid
+    excessive object creation and GC
+  end note
+
+  note bottom of consumer
+    Processes products in batches
+    (MAX_BATCH_SIZE = 5000)
+  end note
+}
+@enduml
